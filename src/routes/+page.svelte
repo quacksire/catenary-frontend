@@ -547,6 +547,8 @@ function numberForBearingLengthRail(zoom:number) {
 				id: 'buses',
 				type: 'circle',
 				source: 'buses',
+				
+				filter: ["!", ["all", ["has", "bearing"]]],
 				paint: {
 					'circle-radius': [
                  "interpolate",
@@ -576,7 +578,58 @@ function numberForBearingLengthRail(zoom:number) {
 					'circle-opacity': 0.5
 				}
 			});
+
+			map.loadImage('./pointer4.png', (error, image:any) => {
+  if (error) throw error;
+  // add image to the active style and make it SDF-enabled
+  map.addImage('pointer', image, { sdf: true });
+});
 		
+
+
+
+		map.addLayer({
+            'id': 'busespointer',
+            'source': 'buses',
+            'type': 'symbol',
+			filter: ["all", ["has", "bearing"]],
+            'layout': {
+              'icon-image': 'pointer',
+              'icon-size': 0.2,
+            'icon-rotate': ['get', 'bearing'],
+			"icon-rotation-alignment": "map",
+			"icon-allow-overlap": true,
+			"icon-ignore-placement": true,
+            },
+            'paint': {
+              'icon-color': [
+				'get',
+				'color'
+			  ],
+			  'icon-opacity': 0.80
+            }
+          });
+		  map.addLayer({
+            'id': 'railpointerdsfdfshj',
+            'source': 'rail',
+            'type': 'symbol',
+            'layout': {
+              'icon-image': 'pointer',
+              'icon-size': 0.32,
+            'icon-rotate': ['get', 'bearing'],
+			"icon-rotation-alignment": "map",
+			"icon-allow-overlap": true,
+			"icon-ignore-placement": true,
+            },
+            'paint': {
+              'icon-color': [
+				'get',
+				'color'
+			  ],
+			  'icon-opacity': 0.9
+            }
+          });
+
 
 			map.addLayer({
 				id: "labelbuses",
@@ -652,6 +705,34 @@ function numberForBearingLengthRail(zoom:number) {
 				},
 			})
 
+			map.loadImage('./pointer4-blk.png', (error, image:any) => {
+  if (error) throw error;
+  // add image to the active style and make it SDF-enabled
+  map.addImage('pointeroutline', image);
+});
+		
+
+
+
+		map.addLayer({
+            'id': 'busespointerover',
+            'source': 'buses',
+            'type': 'symbol',
+			filter: ["all", ["has", "bearing"]],
+            'layout': {
+              'icon-image': 'pointeroutline',
+              'icon-size': 0.25,
+            'icon-rotate': ['get', 'bearing'],
+			"icon-rotation-alignment": "map",
+			"icon-allow-overlap": true,
+			"icon-ignore-placement": true,
+            },
+            'paint': {
+			  'icon-opacity': 0.2
+            }
+          });
+		
+
 			map.addSource('rail', {
 				type: 'geojson',
 				data: {
@@ -660,6 +741,10 @@ function numberForBearingLengthRail(zoom:number) {
 				}
 			});
 
+
+		
+
+			/*
 			map.addLayer({
 				id: 'raillayer',
 				type: 'circle',
@@ -679,7 +764,27 @@ function numberForBearingLengthRail(zoom:number) {
 					'circle-stroke-width': 1,
 					'circle-opacity': 0.8
 				}
-			});
+			});*/
+
+			
+			map.addLayer({
+            'id': 'railpointerover',
+            'source': 'rail',
+            'type': 'symbol',
+			filter: ["all", ["has", "bearing"]],
+            'layout': {
+              'icon-image': 'pointeroutline',
+			  'icon-size': 0.35,
+            'icon-rotate': ['get', 'bearing'],
+			"icon-rotation-alignment": "map",
+			"icon-allow-overlap": true,
+			"icon-ignore-placement": true,
+            },
+            'paint': {
+			  'icon-opacity': 0.2
+            }
+          });
+		
 
 			map.addLayer({
 				id: "labelrail",
@@ -977,39 +1082,7 @@ agencies.forEach((agency_obj: any) => {
 					})
 				}
 
-				//console.log('set data of bearings');
-
-				
-						
-			let mapzoomnumber = numberForBearingLengthBus(map.getZoom())
-				
-				let newbearingdata = {
-					type: 'FeatureCollection',
-					features: flattenedarray.filter((x: any) => x.properties.bearing != undefined)
-					.filter((x: any) => x.properties.bearing != 0)
-					.map((x: any) => {
-						let newcoords = calculateNewCoordinates(x.geometry.coordinates[1], x.geometry.coordinates[0], x.properties.bearing, (mapzoomnumber) / 1000)
-
-						return {
-							type: 'Feature',
-							geometry: {
-								type: 'LineString',
-								coordinates: [
-									[x.geometry.coordinates[0], x.geometry.coordinates[1]],
-									[newcoords.longitude, newcoords.latitude]
-								]
-							},
-							properties: {
-								bearing: x.properties.bearing,
-								color: x.properties.color
-							}
-						}
-					})
-				};
-
-				//console.log('newbearingdata', newbearingdata)
-
-				map.getSource("busbearings").setData(newbearingdata)
+				//console.log('set data of bearings')
 			}
 		}})
 		.catch((e) => {
@@ -1018,12 +1091,6 @@ agencies.forEach((agency_obj: any) => {
 			}
 
 )
-
-if (rerenders_requested.length > 0) {
-	rerenders_requested.forEach(x => {
-
-	})
-}
 
 }, 2000);
 });
@@ -1041,34 +1108,6 @@ if (rerenders_requested.length > 0) {
 					console.log(flattenedarray);
 
 					let mapzoomnumber = numberForBearingLengthBus(map.getZoom())
-					let newbearingdata = {
-									type: 'FeatureCollection',
-									features: flattenedarray.filter((x: any) => x.properties.bearing != undefined)
-									.filter((x: any) => x.properties.bearing != 0)
-									.map((x: any) => {
-
-										let newcoords = calculateNewCoordinates(x.geometry.coordinates[1], x.geometry.coordinates[0], x.properties.bearing, mapzoomnumber / 1000)
-
-										return {
-											type: 'Feature',
-											geometry: {
-												type: 'LineString',
-												coordinates: [
-													[x.geometry.coordinates[0], x.geometry.coordinates[1]],
-													[newcoords.longitude, newcoords.latitude]
-												]
-											},
-											properties: {
-												bearing: x.properties.bearing,
-												color: x.properties.color
-											}
-										}
-									})
-								};
-
-								console.log('newbearingdata', newbearingdata)
-
-								map.getSource("busbearings").setData(newbearingdata)
 				}
 
 				
